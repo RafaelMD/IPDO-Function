@@ -8,17 +8,26 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     try:
         url = req.get_json().get('url')
-        excel = pd.read_excel(url,sheet_name="IPDO", header=None, usecols = "K:X") # https://drive.google.com/uc?authuser=0&id=1bz6wcKcc6wY4xSRmGLvjJpCdPxgs7Ea1&export=download
-
-        objeto = {
-            "atributo" : excel[10][7],
-            "valor1" : excel[12][7],
-            "valor2" : excel[14][7]
-        }
-
-        return func.HttpResponse(json.dumps(objeto))
+        excel = pd.read_excel(url,sheet_name=1, header=None, usecols = "A:L") # http://sdro.ons.org.br/SDRO/DIARIO/2019_10_10/Html/DIARIO_10-10-2019.xlsx
+        lista = []
+        lista.extend(getValuesList("sin", excel.iloc[5:11, 1:5]))
+        lista.extend(getValuesList("norte", excel.iloc[17:20, 2:6], False))
+        return func.HttpResponse(json.dumps(lista))
     except Exception:
         return func.HttpResponse(
              "Erro",
              status_code=400
         )
+
+def getValuesList(regiao, df, inverso = True):
+    lista = []
+    for item in df.values:
+        objeto = {
+            "regiao": regiao,
+            "tipo" : item[0],
+            "programado" : item[1] if inverso else item[3],
+            "verificado" : item[2],
+            "desvio": item[3] if inverso else item[1]
+        }
+        lista.append(objeto)
+    return lista
